@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>出现错误！ | Iam Music Player中转站</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --hover-color: #0056b3;
+            --background-color: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            padding: 0 15px;
+        }
+
+        .message-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .message-content {
+            color: #2c3e50;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin: 0 0 2rem 0;
+            word-break: break-word;
+        }
+
+        .return-btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 32px;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .return-btn:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .message-card {
+                padding: 1.5rem;
+            }
+
+            .message-content {
+                font-size: 1rem;
+            }
+
+            .return-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>服务器出现错误！</h1>
+    <div class="container">
+        <div class="message-card">
+            <p class="message-content">你好，我是服务器，是个崩溃狂魔</p>
+            <p class="message-content">查看控制台来获取错误栈</p>
+            <a href="ti_shi" class="return-btn">
+                <span>← 回到主页</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

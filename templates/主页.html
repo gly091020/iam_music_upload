@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <title>Iam Music Player 模组专用音乐上传</title>
+    <script>
+        function handleCopy(copy_text) {
+            let input_dom = document.createElement('input');
+            input_dom.value = copy_text;
+            document.body.appendChild(input_dom);
+            input_dom.select();
+            document.execCommand("Copy");
+            input_dom.remove();
+        }
+    </script>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --hover-color: #0056b3;
+            --background-color: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h3 {
+            color: #2c3e50;
+            text-align: center;
+            margin: 1.5rem 0;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            margin: 2rem auto;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .file-input {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .file-input input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .file-input input[type="file"]:hover {
+            border-color: var(--primary-color);
+            background: #fff;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button, input[type="submit"] {
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        input[type="submit"] {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        input[type="submit"]:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-1px);
+        }
+
+        button {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        button:hover {
+            background-color: #218838;
+            transform: translateY(-1px);
+        }
+
+        .music-list {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            margin: 2rem auto;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        li:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .footer-text {
+            color: #6c757d;
+            text-align: center;
+            margin: 2rem 0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Iam Music Player 模组专用音乐中转站</h1>
+
+        <div class="upload-section">
+            <form action="file_upload" method="post" enctype="multipart/form-data">
+                <div class="file-input">
+                    <input type="file" name="file" accept="audio/*">
+                </div>
+                <input type="submit" value="上传音乐">
+            </form>
+
+            <div class="button-group">
+                <a href="/url_upload"><button>哔哩哔哩链接下载</button></a>
+                <a href="/nbt_download"><button>导出NBT文件（beta）</button></a>
+            </div>
+        </div>
+
+        <div class="music-list">
+            <h1>音乐列表 (点击复制)</h1>
+            <ul>{[|花里胡哨的占位符来避免冲突|]}</ul>
+        </div>
+
+        <h3 class="footer-text">Iam Music Player 你崛起罢！</h3>
+    </div>
+</body>
+</html>

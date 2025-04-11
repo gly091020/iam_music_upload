@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>NBT音频自动导入 | Iam Music Player中转站</title>
+    <style>
+        :root {
+            --primary-color: #28a745;
+            --danger-color: #dc3545;
+            --disabled-color: #6c757d;
+            --background-color: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin: 2rem 0 1.5rem;
+            font-size: 2.2em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            margin: 2rem auto;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .uuid-inputs {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .uuid-inputs input {
+            width: 80px;
+            height: 50px;
+            text-align: center;
+            font-size: 1.2em;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .uuid-inputs input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25);
+            outline: none;
+        }
+
+        .status-text {
+            text-align: center;
+            font-weight: 500;
+            margin: 1rem 0;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: var(--danger-color);
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .button {
+            padding: 12px 32px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1.1em;
+        }
+
+        .button-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .button-primary:hover:not(:disabled) {
+            background-color: #218838;
+            transform: translateY(-1px);
+        }
+
+        .button-primary:disabled {
+            background-color: var(--disabled-color);
+            cursor: not-allowed;
+        }
+
+        .download-section {
+            text-align: center;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Iam Music Player中转站 NBT音频自动导入</h1>
+        <p class="status-text">将导出的文件放在 <code>[存档文件夹]\data</code> 文件夹即可</p>
+        <div class="card">
+            <p class="alert alert-danger">警告：此操作会覆盖旧文件，请做好备份</p>
+            <p class="alert alert-success">线程状态：{{ running }}</p>
+
+            <form action="_nbt_download" method="get">
+                <div class="form-group">
+                    <p>请输入您的玩家UUID（四位数字）</p>
+                    <div class="uuid-inputs">
+                        <input type="number" name="uuid1" autocomplete="off" min="0" max="9999" required>
+                        <input type="number" name="uuid2" autocomplete="off" min="0" max="9999" required>
+                        <input type="number" name="uuid3" autocomplete="off" min="0" max="9999" required>
+                        <input type="number" name="uuid4" autocomplete="off" min="0" max="9999" required>
+                    </div>
+                    <input type="submit" value="开始导出" {{ is_on }} class="button button-primary">
+                </div>
+            </form>
+
+            <div class="download-section">
+                <a href="/download_file?path=../bin/imp_music_data.dat" {{ is_on1 }}>
+                    <button class="button button-primary">下载处理好的文件</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

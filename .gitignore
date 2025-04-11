@@ -1,0 +1,15 @@
+# 默认忽略的文件
+/shelf/
+/workspace.xml
+/bin/
+/downloader/
+/fast_update.py
+/file_run.sh
+/get_data.py
+/music_run.sh
+/files/
+/.idea
+/data.json
+/config.json
+/build/
+/dist/

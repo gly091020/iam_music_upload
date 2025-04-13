@@ -29,6 +29,11 @@ def music_to_nbt(owner:nbtlib.IntArray, music_name: str, music_link: str, music_
     data["m"]["Source"]["Duration"] = nbtlib.Long(get_duration_pydub(music_path) * 1000)
     data["m"]["CreateDate"] = nbtlib.Long(time.time() * 1000)
     data["m"]["UUID"] = nbtlib.IntArray([random.randint(-99999999, 99999999), random.randint(-99999999, 99999999), random.randint(-99999999, 99999999), random.randint(-99999999, 99999999)])
+    with open("files/image/image.json") as file:
+        d = json.loads(file.read())  # type:dict[str]
+    if music_path in d.keys():
+        data["m"]["Image"]["ImageType"] = nbtlib.String("url")
+        data["m"]["Image"]["Identifier"] = nbtlib.String(music_link.split("path=")[0] + "path=image/" + d[music_path])
     return data
 
 

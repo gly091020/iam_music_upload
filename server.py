@@ -12,6 +12,7 @@ import nbt_import
 import filetype
 import uuid
 from tinytag import TinyTag
+from mutagen import File
 
 app = Flask(__name__)
 config = {"port": 9090, "ip": "127.0.0.1", "debug": False}
@@ -39,7 +40,7 @@ def create_dir():
     for d in ["bin", "downloader", "files", "bin/upload", "downloader/bilibili", "downloader/temporary", "files/image"]:
         if not os.path.isdir(d):
             os.mkdir(d)
-    for f in ["data.json", "downloader/bilibili/请将BBDown.exe放在这里"]:
+    for f in ["data.json", "downloader/bilibili/请将BBDown.exe放在这里", "files/image/image.json"]:
         if os.path.isfile(f):
             continue
         if os.path.splitext(f)[1] == ".json":
@@ -71,7 +72,17 @@ def internal_server_error(e):
 def main_html():
     if download.ok_video_list:
         for v in download.ok_video_list:
-            shutil.copy(v, f"files/{get_random_id(os.path.splitext(os.path.split(v)[1])[0])}.wav")
+            output_file = f"files/{get_random_id(os.path.splitext(os.path.split(v)[1])[0])}.wav"
+            shutil.copy(v, output_file)
+            image_path = os.path.join("files/image/", os.path.splitext(os.path.split(v)[1])[0] + ".jpg")
+            if image_path:
+                u = str(uuid.uuid4())
+                os.rename(image_path, os.path.join(os.path.split(image_path)[0], f"{u}.jpg"))
+                with open("files/image/image.json") as file:
+                    d = json.loads(file.read())
+                d.update({output_file: f"{u}.jpg"})
+                with open("files/image/image.json", "w+") as file:
+                    file.write(json.dumps(d))
             os.remove(v)
         download.ok_video_list.clear()
     with open("data.json") as file:
@@ -89,10 +100,11 @@ def main_html():
 def file_upload():
     file = request.files.get('file')
     if file:
-        if os.path.splitext(file.filename)[1] in [".mp3", ".ogg"]:
+        if os.path.splitext(file.filename)[1] in [".mp3", ".ogg", ".flac"]:
             path = 'downloader/temporary/' + file.filename
             file.save(path)
-            threading.Thread(target=download.update_local, args=(path,), daemon=False).start()
+            get_music_picture(path)
+            threading.Thread(target=download.upload_local, args=(path,), daemon=False).start()
             return redirect(url_for("ti_shi", string='上传成功，正在转换'))
         elif os.path.splitext(file.filename)[1] == ".wav":
             file.save('files/' + file.filename)
@@ -105,16 +117,24 @@ def file_upload():
 
 @app.route('/file_delete', methods=['POST', "GET"])
 def file_delete():
-    file = request.args.get("file")
-    if file:
-        if os.path.isfile(os.path.join("files/" + file)):
-            os.remove(os.path.join("files/" + file))
-            # with open("data.json") as file1:
-            #     d = json.loads(file1.read())  # type:dict
-            # if os.path.splitext(file)[0] in d.values():
-            #     d.pop(d)
-            # with open("data.json", "w+") as file1:
-            #     file1.write(json.dumps(d))
+    file_name = request.args.get("file")
+    if file_name:
+        if os.path.isfile(os.path.join("files/" + file_name)):
+            os.remove(os.path.join("files/" + file_name))
+
+            with open("data.json") as file:
+                d = json.loads(file.read())  # type:dict
+            if os.path.splitext(file_name)[0] in d.values():
+                d.pop(list(d.keys())[list(d.values()).index(os.path.splitext(file_name)[0])])
+            with open("data.json", "w+") as file:
+                file.write(json.dumps(d))
+
+            with open("files/image/image.json") as file:
+                d = json.loads(file.read())  # type:dict[str]
+            if os.path.join("files/" + file_name) in d.keys():
+                os.remove(os.path.join("files/image", d.pop(os.path.join("files/" + file_name))))
+            with open("files/image/image.json", "w+") as file:
+                file.write(json.dumps(d))
         return redirect(url_for("ti_shi", string='删除成功'))
     else:
         return redirect(url_for("ti_shi", string='请求格式错误'))
@@ -125,7 +145,7 @@ def file_import(file: str):
         if os.path.splitext(file)[1] in [".mp3", ".ogg"]:
             path = 'downloader/temporary/' + os.path.split(file)[1]
             shutil.copy(file, path)
-            download.update_local(path)
+            download.upload_local(path)
             name = None
             if download.ok_video_list:
                 for v in download.ok_video_list:
@@ -284,6 +304,16 @@ def upload_image():
                 % (u, t.EXTENSION))
     else:
         return """{"status":2}"""
+
+
+def get_music_picture(path: str):
+    m = File(path)
+    if m.tags['APIC:']:
+        with open(f"files/image/{os.path.splitext(os.path.split(path)[1])[0]}.jpg", "wb+") as file:
+            file.write(m.tags['APIC:'].data)
+        return True
+    else:
+        return False
 
 
 if __name__ == '__main__':

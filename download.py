@@ -2,12 +2,13 @@
 import os
 import subprocess
 import re
+import time
 import traceback
 
 import ffmpy
-ok_video_list = [os.path.join("downloader/temporary", x)
-                 for x in os.listdir("downloader/temporary")
-                 if os.path.splitext(x)[1] == ".wav"]
+import requests
+
+ok_video_list = []
 
 
 def download_bilibili(url: str):
@@ -45,3 +46,19 @@ def to_wav(path: str):
         print("你没装ffmpeg，请安装")
         return False
 
+
+def auto_upload(url: str, upload_file_count: int, time_sleep: float):
+    num = 0
+    d = "auto_upload/"
+    while 1:
+        for f in os.listdir(d):
+            if os.path.splitext(f)[1] != ".mp3":
+                continue
+            file = {'file': open(os.path.join(d, f), 'rb')}
+            requests.post(url, files=file)
+            num += 1
+            os.remove(os.path.join(d, f))
+            if num == upload_file_count:
+                num = 0
+                time.sleep(time_sleep)
+        time.sleep(time_sleep)

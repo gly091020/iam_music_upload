@@ -8,6 +8,7 @@ import traceback
 
 from flask import *
 import download
+import get_image_color
 import nbt_import
 import filetype
 import uuid
@@ -22,25 +23,30 @@ debug = config["debug"]
 
 output_port = f"{ip}:{port}"
 nbt_thread = None #type:threading.Thread
+etched_thread = None #type:threading.Thread
+nbt_import.ip = output_port
 
 def read_config():
-    global config, port, ip, debug
+    global config, port, ip, debug, output_port
     if os.path.isfile("config.json"):
         with open("config.json") as file:
             config = json.loads(file.read())
     else:
         with open("config.json", "w+") as file:
             file.write(json.dumps(config))
+    print(config)
     port = config["port"]
     ip = config["ip"]
     debug = config["debug"]
+    output_port = f"{ip}:{port}"
+    nbt_import.ip = output_port
 
 
 def create_dir():
-    for d in ["bin", "downloader", "files", "bin/upload", "downloader/bilibili", "downloader/temporary", "files/image"]:
+    for d in ["auto_upload", "bin", "downloader", "files", "bin/upload", "downloader/bilibili", "downloader/temporary", "files/image"]:
         if not os.path.isdir(d):
             os.mkdir(d)
-    for f in ["data.json", "downloader/bilibili/请将BBDown.exe放在这里", "files/image/image.json"]:
+    for f in ["data.json", "music_duration.json", "downloader/bilibili/请将BBDown.exe放在这里", "files/image/image.json", "files/image/image_color.json"]:
         if os.path.isfile(f):
             continue
         if os.path.splitext(f)[1] == ".json":
@@ -49,7 +55,9 @@ def create_dir():
         else:
             with open(f, "w+"):
                 pass
-
+    download.ok_video_list = [os.path.join("downloader/temporary", x)
+     for x in os.listdir("downloader/temporary")
+     if os.path.splitext(x)[1] == ".wav"]
 
 
 def get_random_id(music_file):
@@ -75,7 +83,7 @@ def main_html():
             output_file = f"files/{get_random_id(os.path.splitext(os.path.split(v)[1])[0])}.wav"
             shutil.copy(v, output_file)
             image_path = os.path.join("files/image/", os.path.splitext(os.path.split(v)[1])[0] + ".jpg")
-            if image_path:
+            if os.path.isfile(image_path):
                 u = str(uuid.uuid4())
                 os.rename(image_path, os.path.join(os.path.split(image_path)[0], f"{u}.jpg"))
                 with open("files/image/image.json") as file:
@@ -170,7 +178,7 @@ def _url_upload():
     url = request.args.get("url")
     if url:
         if "bilibili" in url or "b23" in url:
-            if not os.path.isfile("downloader/bilibili/BBDown.exe"):
+            if not (os.path.isfile("downloader/bilibili/BBDown.exe") or os.path.isfile("downloader/bilibili/BBDown")):
                 return redirect(url_for(
                     "ti_shi", string='上传失败，请先下载BBDown.exe并放在 downloader/bilibili 文件夹'
                                                          '\nBBDown链接：https://github.com/nilaoda/BBDown/releases'))
@@ -227,7 +235,7 @@ def download_file():
     path = request.args.get("path")
     if not path or not os.path.isfile(os.path.join("files", path)):
         return redirect(url_for("ti_shi", string='找不到文件……'))
-    if os.path.splitext(path)[1] not in [".wav", ".dat", ".json", ".jpg", ".png"]:
+    if os.path.splitext(path)[1] not in [".wav", ".dat", ".json", ".jpg", ".png", ".mcfunction"]:
         return redirect(url_for("ti_shi", string='拒绝操作'))
     if os.path.isdir(os.path.join("files", path)):
         return redirect(url_for("ti_shi", string='暂不支持下载文件夹'))
@@ -300,20 +308,36 @@ def upload_image():
         with open("files/image/%s.%s" % (u, t.EXTENSION), "wb+") as file:
             file.write(request.get_data())
         print("图片上传：" + "%s.%s" % (u, t.EXTENSION))
-        return ("""{"data":{"link":"http://127.0.0.1:9090/download_file?path=image/%s.%s"}}"""
-                % (u, t.EXTENSION))
+        return ("""{"data":{"link":"http://%s/download_file?path=image/%s.%s"}}"""
+                % (output_port, u, t.EXTENSION))
     else:
         return """{"status":2}"""
 
 
 def get_music_picture(path: str):
     m = File(path)
-    if m.tags['APIC:']:
+    if 'APIC:' in m.tags:
         with open(f"files/image/{os.path.splitext(os.path.split(path)[1])[0]}.jpg", "wb+") as file:
             file.write(m.tags['APIC:'].data)
         return True
     else:
         return False
+
+
+@app.route("/_etched_command_output")
+def _etched_command_output():
+    global etched_thread
+    etched_thread = threading.Thread(target=get_image_color.chu_li, args=(output_port,))
+    etched_thread.start()
+    return redirect(url_for("main_html"))
+
+
+@app.route("/etched_command_output")
+def etched_command_output():
+    return render_template("etched导出.html",
+                           generate_disabled=("disabled=\"disabled\"" if etched_thread and etched_thread.is_alive() else ""),
+                           download_disabled=("" if os.path.isfile("bin/command.mcfunction") else "disabled=\"disabled\""),
+                           export_status="线程运行中" if etched_thread and etched_thread.is_alive() else "空闲")
 
 
 if __name__ == '__main__':

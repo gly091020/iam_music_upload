@@ -13,3 +13,5 @@
 /config.json
 /build/
 /dist/
+/auto_upload/
+/music_duration.json

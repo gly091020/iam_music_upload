@@ -6,6 +6,7 @@ import os
 from PIL import Image
 import numpy as np
 
+command = "%s%s%s%s%s%s"
 
 def median_cut(pixels, depth=0, max_depth=2):
     """递归中位切分算法"""
@@ -40,7 +41,6 @@ def get_dominant_colors_median_cut(image_path, num_colors=4, sample_size=10000):
 def chu_li(output_port):
     with open("files/image/image_color.json", "r+") as file:
         color_d = json.loads(file.read())
-    COMMAND = r"""/give @s etched:etched_music_disc[etched:music=[{Author: "%s", Title: "%s", Url: "%s"}],etched:disc_appearance={labelSecondaryColor: %d, pattern: "flat", discColor: %d, labelPrimaryColor: %d}]"""
     with open("data.json") as file:
         d = json.loads(file.read())
     with open("files/image/image.json") as image_file:
@@ -59,15 +59,15 @@ def chu_li(output_port):
             if colors:
                 if "-" in k:
                     a, t = k.split(" - ")
-                    command = COMMAND % (a, t, url, colors[2], colors[0], colors[1])
+                    command = command % (a, t, url, colors[2], colors[0], colors[1])
                 else:
-                    command = COMMAND % ("", k, url, colors[2], colors[0], colors[1])
+                    command = command % ("", k, url, colors[2], colors[0], colors[1])
             else:
                 if "-" in k:
                     a, t = k.split(" - ")
-                    command = COMMAND % (a, t, url, -1, -1, -1)
+                    command = command % (a, t, url, -1, -11447983, -1)
                 else:
-                    command = COMMAND % ("", k, url, -1, -1, -1)
+                    command = command % ("", k, url, -1, -11447983, -1)
             command_file.write(command + "\n")
         with open("files/image/image_color.json", "w+") as file:
             file.write(json.dumps(color_d))

@@ -2,10 +2,12 @@
 import json
 import os
 import shutil
+import subprocess
 import time
 import threading
 import traceback
 
+import ffmpy
 from flask import *
 import download
 import get_image_color
@@ -16,15 +18,25 @@ from tinytag import TinyTag
 from mutagen import File
 
 app = Flask(__name__)
-config = {"port": 9090, "ip": "127.0.0.1", "debug": False}
+config = {"port": 9090, "ip": "127.0.0.1", "debug": False,
+          "command": r"""summon minecraft:item ~ ~ ~ {Item:{id:"etched:etched_music_disc",components:{"etched:music":[{Author: "%s", Title: "%s", Url: "%s"}],"etched:disc_appearance":{labelSecondaryColor: %d, pattern: "flat", discColor: %d, labelPrimaryColor: %d}}}}""",
+          "youtube_proxy": "no"
+}
 port = config["port"]
 ip = config["ip"]
 debug = config["debug"]
+get_image_color.command = config["command"]
 
 output_port = f"{ip}:{port}"
 nbt_thread = None #type:threading.Thread
 etched_thread = None #type:threading.Thread
 nbt_import.ip = output_port
+
+def has_ffmpeg():
+    try:
+        ffmpy.FFmpeg(inputs={"": "-version"}).run(stdout=subprocess.PIPE)
+    except ffmpy.FFExecutableNotFoundError:
+        raise ffmpy.FFExecutableNotFoundError("你没有安装ffmpeg，请去https://ffmpeg.org/下载")
 
 def read_config():
     global config, port, ip, debug, output_port
@@ -33,20 +45,21 @@ def read_config():
             config = json.loads(file.read())
     else:
         with open("config.json", "w+") as file:
-            file.write(json.dumps(config))
-    print(config)
+            file.write(json.dumps(config, ensure_ascii=False, indent=4))
     port = config["port"]
     ip = config["ip"]
     debug = config["debug"]
+    get_image_color.command = config["command"]
     output_port = f"{ip}:{port}"
     nbt_import.ip = output_port
+    download.proxy = None if config["youtube_proxy"] == "no" else config["youtube_proxy"]
 
 
 def create_dir():
-    for d in ["auto_upload", "bin", "downloader", "files", "bin/upload", "downloader/bilibili", "downloader/temporary", "files/image"]:
+    for d in ["auto_upload", "bin", "downloader", "files", "bin/upload", "downloader/bilibili", "downloader/temporary", "files/image", "downloader/youtube"]:
         if not os.path.isdir(d):
             os.mkdir(d)
-    for f in ["data.json", "music_duration.json", "downloader/bilibili/请将BBDown.exe放在这里", "files/image/image.json", "files/image/image_color.json"]:
+    for f in ["data.json", "music_duration.json", "downloader/bilibili/请将BBDown.exe放在这里", "files/image/image.json", "files/image/image_color.json", "downloader/youtube/请使用Get cookies.txt LOCALLY插件获取文件放在这里"]:
         if os.path.isfile(f):
             continue
         if os.path.splitext(f)[1] == ".json":
@@ -177,13 +190,17 @@ def file_import(file: str):
 def _url_upload():
     url = request.args.get("url")
     if url:
+        print("上传：" + url)
         if "bilibili" in url or "b23" in url:
             if not (os.path.isfile("downloader/bilibili/BBDown.exe") or os.path.isfile("downloader/bilibili/BBDown")):
                 return redirect(url_for(
                     "ti_shi", string='上传失败，请先下载BBDown.exe并放在 downloader/bilibili 文件夹'
-                                                         '\nBBDown链接：https://github.com/nilaoda/BBDown/releases'))
-            print("上传：" + url)
+                                     '\nBBDown链接：https://github.com/nilaoda/BBDown/releases'))
             threading.Thread(target=download.download_bilibili, args=[url], daemon=True).start()
+            return redirect(url_for("ti_shi", string='上传成功'))
+        elif "youtube" in url:
+            threading.Thread(target=download.download_youtube, args=[url], daemon=True).start()
+            return redirect(url_for("ti_shi", string='上传成功'))
         else:
             return redirect(url_for("ti_shi", string='上传失败，未知的链接'))
     else:
@@ -340,8 +357,13 @@ def etched_command_output():
                            export_status="线程运行中" if etched_thread and etched_thread.is_alive() else "空闲")
 
 
-if __name__ == '__main__':
+def main():
+    has_ffmpeg()
     read_config()
     create_dir()
     print("将在http://%s上运行" % output_port)
     app.run(debug=debug, host="0.0.0.0", port=port)
+
+
+if __name__ == '__main__':
+    main()

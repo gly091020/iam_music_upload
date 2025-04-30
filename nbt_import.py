@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import os.path
 import random
 import time
 import shutil
@@ -72,12 +73,16 @@ def chu_li(u1, u2, u3, u4):
     if len(dat["data"]["Musics"]) == 0:
         music_nbt = []
         for k, v in data.items():
+            if not os.path.isfile(os.path.join("files", v + ".wav")):
+                continue
             m = music_to_nbt(o, k, 'http://' + ip + '/download_file?path=' + v + ".wav", "files/" + v + ".wav")
             musics.append(m["m"]["UUID"])
             music_nbt.append(m)
         dat["data"]["Musics"] = nbtlib.List(music_nbt)
     else:
         for k, v in data.items():
+            if not os.path.isfile(os.path.join("files", v + ".wav")):
+                continue
             m = music_to_nbt(o, k, 'http://' + ip + '/download_file?path=' + v + ".wav", "files/" + v + ".wav")
             musics.append(m["m"]["UUID"])
             dat["data"]["Musics"].append(m)

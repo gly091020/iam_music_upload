@@ -5,11 +5,13 @@ import re
 import time
 import traceback
 
+import yt_dlp
 import ffmpy
 import requests
+from mutagen import File
 
 ok_video_list = []
-
+proxy = None
 
 def download_bilibili(url: str):
     u = re.sub(r"\?spm_id_from.*", "", url)
@@ -17,9 +19,55 @@ def download_bilibili(url: str):
     s.communicate()
     for f in os.listdir("downloader/bilibili"):
         if os.path.splitext(f)[1] in [".m4a"]:
+            get_music_picture(os.path.join("downloader/bilibili", f))
             to_wav(os.path.join("downloader/bilibili", f))
             ok_video_list.append(f"downloader/temporary/{os.path.splitext(os.path.split(os.path.join('downloader/bilibili', f))[1])[0]}.wav")
             os.remove(os.path.join("downloader/bilibili", f))
+
+
+def download_youtube(url: str):
+    cookie = None
+    output_path = "downloader/youtube/out.m4a"
+    for f in os.listdir("downloader/youtube/"):
+        f = os.path.join("downloader/youtube/", f)
+        if os.path.splitext(f)[1] == ".txt" and "cookie" in f:
+            cookie = f
+    common_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'proxy': proxy,
+    }
+    if cookie:
+        common_opts.update({"cookiefile": cookie})
+    else:
+        print("警告：未找到cookie文件，这可能导致下载失败")
+    if proxy is None:
+        common_opts.pop("proxy")
+    audio_opts = {
+        **common_opts,
+        'format': 'bestaudio[ext=m4a]/bestaudio',
+        'outtmpl': output_path,
+    }
+
+    with yt_dlp.YoutubeDL(common_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        title = info['title']
+        channel = info["channel"]
+        thumbnail = info['thumbnail']
+    with yt_dlp.YoutubeDL(audio_opts) as ydl:
+        ydl.download([url])
+    new_name = os.path.join("downloader/youtube/", "%s-%s.m4a"
+                                                         % (channel, title))
+    os.rename(output_path, new_name)
+    to_wav(new_name)
+    ok_video_list.append(
+        f"downloader/temporary/{os.path.splitext(os.path.split(new_name)[1])[0]}.wav")
+    os.remove(new_name)
+    with requests.get(thumbnail) as r:
+        if r.status_code == 200:
+            with open(os.path.join("files/image/", os.path.splitext(os.path.split(new_name)[1])[0] + '.jpg'), "wb+") as file:
+                file.write(r.content)
+
 
 
 def upload_local(path: str):
@@ -62,3 +110,15 @@ def auto_upload(url: str, upload_file_count: int, time_sleep: float):
                 num = 0
                 time.sleep(time_sleep)
         time.sleep(time_sleep)
+
+def get_music_picture(path: str):
+    m = File(path)
+    if 'APIC:' in m.tags:
+        d = m.tags['APIC:'].data
+    elif "covr" in m.tags:
+        d = m.tags["covr"][0]
+    else:
+        return False
+    with open(f"files/image/{os.path.splitext(os.path.split(path)[1])[0]}.jpg", "wb+") as file:
+        file.write(d)
+    return True
